@@ -5,11 +5,18 @@ import { OpenAI } from "openai";
 import { TRPCError } from "@trpc/server";
 
 // Initialize OpenAI client conditionally
-let openai: OpenAI | null = null;
-if (process.env.OPENAI_API_KEY) {
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-} else {
-  console.warn("OPENAI_API_KEY not set; OpenAI features are disabled.");
+// Initialize OpenAI client lazily
+let openaiInstance: OpenAI | null = null;
+
+function getOpenAI() {
+  if (openaiInstance) return openaiInstance;
+
+  if (process.env.OPENAI_API_KEY) {
+    openaiInstance = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    return openaiInstance;
+  }
+
+  return null;
 }
 
 // Helper function to parse natural language task input
@@ -32,6 +39,7 @@ Saída: {"title":"Reunião com cliente","description":"Sobre o projeto","priorit
 Entrada: "Comprar leite"
 Saída: {"title":"Comprar leite","priority":"low","category":"personal"}`;
 
+  const openai = getOpenAI();
   if (!openai) {
     throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
   }
@@ -214,6 +222,7 @@ Seja específico, motivador e prático.`;
 - Streak: ${analysis.streak} dias`;
   }
 
+  const openai = getOpenAI();
   if (!openai) {
     throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
   }
@@ -360,6 +369,7 @@ ${contextData ? `\nContexto do usuário: ${contextData}` : ''}`;
       ];
 
       // Call OpenAI with function calling
+      const openai = getOpenAI();
       if (!openai) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
       }
@@ -530,6 +540,7 @@ ${Object.entries(analysis.tasksByCategory)
 Taxa de conclusão: ${analysis.completionRate}%
 Horário produtivo: ${analysis.peakProductivityHour}`;
 
+    const openai = getOpenAI();
     if (!openai) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
     }
@@ -599,6 +610,7 @@ Seja positivo e específico. Responda em português de Portugal.`;
 
 Próximo evento: ${eventsToday[0]?.title || 'Nenhum'}`;
 
+    const openai = getOpenAI();
     if (!openai) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
     }
@@ -646,6 +658,7 @@ Saída: {"title":"Almoço com João","description":"","startTime":"2025-11-23T13
 Entrada: "Reunião de projeto na sexta as 10"
 Saída: {"title":"Reunião de projeto","startTime":"2025-11-28T10:00:00Z","endTime":"2025-11-28T11:00:00Z","category":"work"}`;
 
+      const openai = getOpenAI();
       if (!openai) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
       }
