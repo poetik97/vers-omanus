@@ -43,7 +43,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
 # Gerar Prisma Client no estágio de produção
-RUN npx prisma generate
+RUN npx prisma@6.19.0 generate
 
 # Expor porta (Cloud Run usa PORT env var)
 ENV PORT=8080
