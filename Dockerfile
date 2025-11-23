@@ -51,5 +51,5 @@ EXPOSE 3000
 
 # Comando de start usando node diretamente
 # Nota: Cloud Run faz health checks externamente, não é necessário HEALTHCHECK no Dockerfile
-CMD ["node", "-e", "console.log('HELLO FROM RAILWAY DEBUG'); setInterval(() => {}, 1000);"]
+CMD ["node", "dist/index.js"]
 
