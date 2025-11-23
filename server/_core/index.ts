@@ -30,6 +30,8 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
+console.log("🚀 SERVER STARTING - VERSION WITH LAZY RESEND FIX 🚀");
+
 async function startServer() {
   const app = express();
   const server = createServer(app);
@@ -82,7 +84,6 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
-      transformer: superjson,
     })
   );
 
