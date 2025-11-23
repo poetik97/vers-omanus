@@ -110,6 +110,17 @@ async function startServer() {
   server.listen(port, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${port}/`);
   });
+
+  const shutdown = (signal: string) => {
+    console.log(`[Shutdown] Received ${signal}. Closing server...`);
+    server.close(() => {
+      console.log('[Shutdown] Server closed.');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 startServer().catch(console.error);
