@@ -1,0 +1,333 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model achievements {
+  id          String   @id
+  userId      String
+  type        String
+  title       String
+  description String?
+  xpEarned    Int      @default(0)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  users       users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model automations {
+  id          String    @id
+  userId      String
+  name        String
+  description String?
+  trigger     Json
+  action      Json
+  enabled     Boolean   @default(true)
+  lastRun     DateTime?
+  createdAt   DateTime  @default(now())
+  users       users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model badges {
+  id          String        @id
+  name        String
+  description String?
+  icon        String?
+  category    String?
+  requirement Json?
+  rarity      BadgeRarity   @default(common)
+  xpReward    Int           @default(0)
+  createdAt   DateTime      @default(now())
+  user_badges user_badges[]
+}
+
+model chat_messages {
+  id        String   @id
+  userId    String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model diary_entries {
+  id             String   @id
+  userId         String
+  title          String?
+  content        String
+  mood           String?
+  tags           String[]
+  sentiment      String?
+  sentimentScore Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+  users          users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model events {
+  id            String   @id
+  userId        String
+  title         String
+  description   String?
+  startTime     DateTime
+  endTime       DateTime
+  location      String?
+  category      Category @default(other)
+  color         String?
+  googleEventId String?  @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+  users         users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model financial_categories {
+  id        String          @id
+  name      String
+  type      TransactionType
+  icon      String?
+  color     String?
+  budget    Float?
+  createdAt DateTime        @default(now())
+}
+
+model goal_checkins {
+  id        String   @id
+  goalId    String
+  value     Int
+  note      String?
+  createdAt DateTime @default(now())
+  goals     goals    @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+}
+
+model goals {
+  id            String          @id
+  userId        String
+  title         String
+  description   String?
+  targetValue   Int
+  currentValue  Int             @default(0)
+  unit          String
+  deadline      DateTime?
+  status        GoalStatus      @default(active)
+  category      Category        @default(other)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  goal_checkins goal_checkins[]
+  users         users           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model google_tokens {
+  id           String   @id
+  userId       String   @unique
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  users        users    @relation(fields: [userId], references: [id])
+}
+
+model menstrual_cycles {
+  id           String    @id
+  userId       String
+  startDate    DateTime
+  endDate      DateTime?
+  cycleLength  Int?
+  periodLength Int?
+  flow         String?
+  symptoms     String[]
+  mood         String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  users        users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model notification_preferences {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  emailEnabled      Boolean  @default(true)
+  pushEnabled       Boolean  @default(true)
+  taskReminders     Boolean  @default(true)
+  eventReminders    Boolean  @default(true)
+  goalUpdates       Boolean  @default(true)
+  financialAlerts   Boolean  @default(true)
+  diaryReminders    Boolean  @default(true)
+  menstrualAlerts   Boolean  @default(true)
+  dailySummary      Boolean  @default(true)
+  dailySummaryTime  String   @default("08:00")
+  weeklySummary     Boolean  @default(true)
+  monthlySummary    Boolean  @default(false)
+  quietHoursStart   String?
+  quietHoursEnd     String?
+  timezone          String   @default("Europe/Lisbon")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  users             users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model notifications {
+  id          String    @id
+  userId      String
+  title       String
+  message     String
+  type        String
+  read        Boolean   @default(false)
+  actionUrl   String?
+  metadata    Json?
+  emailSent   Boolean   @default(false)
+  emailSentAt DateTime?
+  createdAt   DateTime  @default(now())
+  users       users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@index([type])
+}
+
+model tasks {
+  id            String     @id
+  userId        String
+  title         String
+  description   String?
+  status        TaskStatus @default(todo)
+  priority      Priority   @default(medium)
+  category      Category   @default(other)
+  dueDate       DateTime?
+  scheduledTime String?
+  estimatedTime Int?
+  completedAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime
+  users         users      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model transactions {
+  id          String          @id
+  userId      String
+  type        TransactionType
+  amount      Float
+  category    String
+  description String?
+  date        DateTime
+  createdAt   DateTime        @default(now())
+  users       users           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model user_badges {
+  id       String   @id
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+  progress Int      @default(0)
+  badges   badges   @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  users    users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([badgeId])
+  @@index([userId])
+}
+
+model users {
+  id                       String                    @id @default(uuid())
+  name                     String?
+  email                    String?                   @unique
+  password                 String?
+  loginMethod              String?
+  role                     Role                      @default(user)
+  createdAt                DateTime                  @default(now())
+  lastSignedIn             DateTime                  @default(now())
+  avatar                   String?
+  bio                      String?
+  timezone                 String                    @default("Europe/Lisbon")
+  language                 String                    @default("pt")
+  level                    Int                       @default(1)
+  xp                       Int                       @default(0)
+  streak                   Int                       @default(0)
+  completedOnboarding      Boolean                   @default(false)
+  lastActivityDate         DateTime?
+  achievements             achievements[]
+  automations              automations[]
+  chat_messages            chat_messages[]
+  diary_entries            diary_entries[]
+  events                   events[]
+  goals                    goals[]
+  google_tokens            google_tokens?
+  menstrual_cycles         menstrual_cycles[]
+  notification_preferences notification_preferences?
+  notifications            notifications[]
+  tasks                    tasks[]
+  transactions             transactions[]
+  user_badges              user_badges[]
+}
+
+enum BadgeRarity {
+  common
+  rare
+  epic
+  legendary
+}
+
+enum Category {
+  work
+  personal
+  health
+  finance
+  other
+}
+
+enum GoalStatus {
+  active
+  completed
+  paused
+  cancelled
+}
+
+enum Priority {
+  low
+  medium
+  high
+}
+
+enum Role {
+  user
+  admin
+}
+
+enum TaskStatus {
+  todo
+  in_progress
+  done
+  archived
+}
+
+enum TransactionType {
+  income
+  expense
+}

@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: organiza-te360
+    runtime: node
+    plan: free
+    buildCommand: pnpm install && pnpm exec prisma generate && pnpm build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22.13.0
+      - key: VITE_APP_ID
+        value: proj_organiza_te360
+      - key: VITE_APP_TITLE
+        value: Organiza-te360
+      - key: VITE_APP_LOGO
+        value: https://placehold.co/40x40/a855f7/ffffff?text=O
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: organiza-te360-db
+          property: connectionString
+      - key: PORT
+        value: 3000
+
+databases:
+  - name: organiza-te360-db
+    plan: free
+    databaseName: organiza_te360
+    user: organiza_te360_user
