@@ -1,5 +1,4 @@
 import "dotenv/config";
-console.log("🚀 Starting server initialization...");
 import express from "express";
 import { createServer } from "http";
 import net from "net";
