@@ -46,8 +46,8 @@ COPY --from=builder /app/prisma ./prisma
 RUN npx prisma@6.19.0 generate
 
 # Expor porta (Cloud Run usa PORT env var)
-ENV PORT=8080
-EXPOSE 8080
+ENV PORT=3000
+EXPOSE 3000
 
 # Comando de start usando node diretamente
 # Nota: Cloud Run faz health checks externamente, não é necessário HEALTHCHECK no Dockerfile

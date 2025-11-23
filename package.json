@@ -11,7 +11,8 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
-    "db:push": "drizzle-kit generate && drizzle-kit migrate"
+    "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "railway:deploy": "railway up --service f26a33c5-116c-40d1-9501-f7eecf40ce69 --detach"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
