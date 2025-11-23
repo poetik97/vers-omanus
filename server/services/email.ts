@@ -6,9 +6,19 @@ let resendInstance: Resend | null = null;
 function getResend() {
   if (resendInstance) return resendInstance;
 
-  if (process.env.RESEND_API_KEY) {
-    resendInstance = new Resend(process.env.RESEND_API_KEY);
-    return resendInstance;
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (apiKey) {
+    try {
+      console.log('[Email Service] Initializing Resend with key length:', apiKey.length);
+      resendInstance = new Resend(apiKey);
+      return resendInstance;
+    } catch (error) {
+      console.error('[Email Service] Failed to initialize Resend:', error);
+      return null;
+    }
+  } else {
+    console.warn('[Email Service] RESEND_API_KEY is missing or empty');
   }
 
   return null;
