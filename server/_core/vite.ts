@@ -59,12 +59,21 @@ export function serveStatic(app: Express) {
     console.error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
+  } else {
+    console.log(`[Static] Serving static files from: ${distPath}`);
+    const indexHtml = path.resolve(distPath, "index.html");
+    if (fs.existsSync(indexHtml)) {
+      console.log(`[Static] Found index.html at: ${indexHtml}`);
+    } else {
+      console.error(`[Static] MISSING index.html at: ${indexHtml}`);
+    }
   }
 
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  app.use("*", (req, res) => {
+    console.log(`[Static] Fallback to index.html for: ${req.originalUrl}`);
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

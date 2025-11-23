@@ -48,8 +48,9 @@ async function startServer() {
   }
 
   // SECURITY: Helmet for security headers
+  // SECURITY: Helmet for security headers
   app.use(helmet({
-    contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+    contentSecurityPolicy: false, // FIXME: Re-enable with proper config after fixing white screen
   }));
 
   // SECURITY: CORS configuration
