@@ -25,6 +25,11 @@ envLines.forEach(line => {
 // Adicionar NODE_ENV=production
 variables['NODE_ENV'] = 'production';
 
+// Garantir que VITE_APP_TITLE esteja definido
+if (!variables['VITE_APP_TITLE']) {
+    variables['VITE_APP_TITLE'] = 'Organiza-te360';
+}
+
 // Gerar novo JWT_SECRET se necessário, ou usar o existente
 // variables['JWT_SECRET'] = ... (já deve estar no .env)
 

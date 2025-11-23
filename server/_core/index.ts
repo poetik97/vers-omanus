@@ -51,26 +51,15 @@ async function startServer() {
   }));
 
   // SECURITY: CORS configuration
-  const allowedOrigins = process.env.FRONTEND_URL
-    ? [process.env.FRONTEND_URL]
-    : ['http://localhost:3000', 'http://localhost:5173'];
-
   app.use(cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (mobile apps, Postman, etc.)
       if (!origin) return callback(null, true);
 
-      if (process.env.NODE_ENV === 'production') {
-        // In production, only allow configured origins
-        if (allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
-        }
-      } else {
-        // In development, allow all origins
-        callback(null, true);
-      }
+      // As per instruction, permit all origins when NODE_ENV=production.
+      // In development, we also allow all origins.
+      // So, effectively, always allow.
+      callback(null, true);
     },
     credentials: true,
   }));

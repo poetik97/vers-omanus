@@ -4,10 +4,13 @@ import prisma from "../db";
 import { OpenAI } from "openai";
 import { TRPCError } from "@trpc/server";
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI client conditionally
+let openai: OpenAI | null = null;
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+} else {
+  console.warn("OPENAI_API_KEY not set; OpenAI features are disabled.");
+}
 
 // Helper function to parse natural language task input
 async function parseTaskFromNLP(userMessage: string, userId: string) {
@@ -29,6 +32,9 @@ Saída: {"title":"Reunião com cliente","description":"Sobre o projeto","priorit
 Entrada: "Comprar leite"
 Saída: {"title":"Comprar leite","priority":"low","category":"personal"}`;
 
+  if (!openai) {
+    throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
+  }
   const response = await openai.chat.completions.create({
     model: "gpt-4.1-mini",
     messages: [
@@ -208,6 +214,9 @@ Seja específico, motivador e prático.`;
 - Streak: ${analysis.streak} dias`;
   }
 
+  if (!openai) {
+    throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
+  }
   const response = await openai.chat.completions.create({
     model: "gpt-4.1-mini",
     messages: [
@@ -351,6 +360,9 @@ ${contextData ? `\nContexto do usuário: ${contextData}` : ''}`;
       ];
 
       // Call OpenAI with function calling
+      if (!openai) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
+      }
       const response = await openai.chat.completions.create({
         model: "gpt-4.1-mini",
         messages: [
@@ -518,6 +530,9 @@ ${Object.entries(analysis.tasksByCategory)
 Taxa de conclusão: ${analysis.completionRate}%
 Horário produtivo: ${analysis.peakProductivityHour}`;
 
+    if (!openai) {
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
+    }
     const response = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
@@ -584,6 +599,9 @@ Seja positivo e específico. Responda em português de Portugal.`;
 
 Próximo evento: ${eventsToday[0]?.title || 'Nenhum'}`;
 
+    if (!openai) {
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
+    }
     const response = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
@@ -628,6 +646,9 @@ Saída: {"title":"Almoço com João","description":"","startTime":"2025-11-23T13
 Entrada: "Reunião de projeto na sexta as 10"
 Saída: {"title":"Reunião de projeto","startTime":"2025-11-28T10:00:00Z","endTime":"2025-11-28T11:00:00Z","category":"work"}`;
 
+      if (!openai) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
+      }
       const response = await openai.chat.completions.create({
         model: "gpt-4.1-mini",
         messages: [
