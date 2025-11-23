@@ -98,8 +98,8 @@ Uma aplicação web moderna e completa para gestão de tarefas, calendário, fin
 
 ### **1. Clonar o Repositório**
 ```bash
-git clone https://github.com/seu-usuario/organiza-te360.git
-cd organiza-te360
+git clone https://github.com/poetik97/vers-omanus.git
+cd vers-omanus
 ```
 
 ### **2. Instalar Dependências**
