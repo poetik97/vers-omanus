@@ -1,6 +1,18 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend client lazily
+let resendInstance: Resend | null = null;
+
+function getResend() {
+  if (resendInstance) return resendInstance;
+
+  if (process.env.RESEND_API_KEY) {
+    resendInstance = new Resend(process.env.RESEND_API_KEY);
+    return resendInstance;
+  }
+
+  return null;
+}
 
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Organiza-te360 <noreply@organiza-te360.com>';
 const EMAIL_SUPPORT = process.env.EMAIL_SUPPORT || 'suporte@organiza-te360.com';
@@ -32,7 +44,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
     }
 
     // Check if Resend API key is configured
-    if (!process.env.RESEND_API_KEY) {
+    const resend = getResend();
+    if (!resend) {
       console.warn('[Email Service] RESEND_API_KEY not configured, skipping email');
       return false;
     }
@@ -68,7 +81,7 @@ export async function sendBatchEmails(emails: SendEmailOptions[]): Promise<boole
     emails.map(email => sendEmail(email))
   );
 
-  return results.map(result => 
+  return results.map(result =>
     result.status === 'fulfilled' ? result.value : false
   );
 }
