@@ -10,6 +10,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic } from "./vite";
 import superjson from "superjson";
+import compression from "compression";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -31,6 +32,14 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 console.log("🚀 SERVER STARTING - VERSION WITH LAZY RESEND FIX 🚀");
+console.log("=== ENVIRONMENT DIAGNOSTICS ===");
+console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`PORT: ${process.env.PORT}`);
+console.log(`VITE_SUPABASE_URL present: ${!!process.env.VITE_SUPABASE_URL}`);
+console.log(`VITE_SUPABASE_ANON_KEY present: ${!!process.env.VITE_SUPABASE_ANON_KEY}`);
+console.log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
+console.log(`Current working directory: ${process.cwd()}`);
+console.log("================================");
 
 async function startServer() {
   const app = express();
@@ -39,18 +48,44 @@ async function startServer() {
   // SECURITY: Force HTTPS in production
   if (process.env.NODE_ENV === 'production') {
     app.use((req, res, next) => {
-      if (req.header('x-forwarded-proto') !== 'https') {
-        res.redirect(`https://${req.header('host')}${req.url}`);
-      } else {
-        next();
+      const forwardedProto = req.header('x-forwarded-proto');
+      const host = req.header('host');
+
+      // Log for debugging in production
+      if (req.url === '/' || req.url.startsWith('/login')) {
+        console.log(`[HTTPS Check] URL: ${req.url}, x-forwarded-proto: ${forwardedProto}, host: ${host}`);
       }
+
+      // Only redirect if explicitly HTTP (not HTTPS and not missing header)
+      // Cloud Run sets x-forwarded-proto to 'https' when request comes via HTTPS
+      if (forwardedProto === 'http') {
+        console.log(`[HTTPS Redirect] Redirecting ${req.url} to HTTPS`);
+        return res.redirect(301, `https://${host}${req.url}`);
+      }
+
+      next();
     });
   }
 
   // SECURITY: Helmet for security headers
-  // SECURITY: Helmet for security headers
   app.use(helmet({
-    contentSecurityPolicy: false, // FIXME: Re-enable with proper config after fixing white screen
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline needed for Vite in production
+        styleSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline needed for inline styles
+        imgSrc: ["'self'", "data:", "https:", "blob:"], // Allow images from various sources
+        connectSrc: [
+          "'self'",
+          "https://*.supabase.co", // Supabase API
+          "wss://*.supabase.co", // Supabase Realtime
+        ],
+        fontSrc: ["'self'", "data:"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'self'"],
+      },
+    },
   }));
 
   // SECURITY: CORS configuration
@@ -70,9 +105,33 @@ async function startServer() {
   // Cookie parser
   app.use(cookieParser());
 
+  // Compression middleware (gzip)
+  app.use(compression({
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+    level: 6, // Compression level (0-9, 6 is good balance)
+  }));
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Cache headers for static assets
+  app.use((req, res, next) => {
+    // Cache static assets for 1 year
+    if (req.url.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+    // Don't cache HTML
+    else if (req.url.match(/\.html$/) || req.url === '/') {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+    next();
+  });
 
   // Simple health check endpoint
   app.get("/api/health", (_req, res) => {
